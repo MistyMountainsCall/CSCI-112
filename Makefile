@@ -6,12 +6,7 @@ all:
 
 update:
 	git add .
-	git commit
-	echo "These should all be green"
-	git status
-	git git push
-	echo "Should be blank now"
-	git status
+	git commit;git git push
 
 bonus:
 	gcc vanhouten_walker_bonus1.c -o bonus
