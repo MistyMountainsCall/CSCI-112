@@ -6,7 +6,7 @@ all:
 
 update:
 	git add .
-	git commit;git git push
+	git commit;git push
 
 bonus:
 	gcc vanhouten_walker_bonus1.c -o bonus
