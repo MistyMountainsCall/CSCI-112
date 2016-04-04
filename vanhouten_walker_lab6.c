@@ -43,17 +43,21 @@ void printReversedWords(char *line) {
 	//print out words in reverse order
 	int a = i - 1;
 	int c;
-	for(i = 0; i < n; i++) {
+	for(i = 0; i <= n; i++) {
 		int b = 0;						//reset b to 0. (b represents length of the word/substring to be printed next)
 		while(line[a]!=' ' && a>=0) {	//starting from the last character in the string go back until a space or string begining is found
 			b++;
 			a--;
 		}
+		
 		for(c = 1; c <= b; c++) {		//print out word found by the previous while loop
-			if(line[a+c]!='?' && line[a+c]!='.' && line[a+c]!='!' && line[a+c]!=',')
-			printf("%c", line[a+c]);
+			if(line[a+c]!='?' && line[a+c]!='.' && line[a+c]!='!' && line[a+c]!=',') {
+				printf("%c", line[a+c]);
+			}
 		}
-		a--;
+		while(line[a]==' ' && a>=0) {
+			a--;
+		}
 		printf(" ");
 	}
 	printf("\n");
