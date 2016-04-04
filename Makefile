@@ -10,7 +10,7 @@ update:
 
 bonus:
 	gcc vanhouten_walker_bonus1.c -o bonus
-	./bonus
+	./bonus thingy
 	rm bonus
 
 
@@ -21,5 +21,13 @@ p2:
 
 l6:
 	c99 -Wall vanhouten_walker_lab6.c -o lab6
-	./lab6
+	./lab6 2
 	rm lab6
+	
+
+testing:
+	gcc test.c -o test
+	./test
+
+clean:
+	rm test

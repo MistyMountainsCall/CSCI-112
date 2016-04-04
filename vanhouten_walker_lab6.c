@@ -13,7 +13,10 @@
 void printReversedWords(char line[]);
 
 int main(int argc, char *argv[]) {
-	printf("running");
+	if(argc<=1) {
+		printf("ERROR: Please provide an integer greater than or equal to 0\n");
+		return 0;
+	}
 	int n = (int) strtol(argv[1], NULL, 10);
 	int i;
 	for(i = 0; i < n; i++) {
@@ -29,25 +32,29 @@ void printReversedWords(char *line) {
 	int n = 0;	//get number of words in line
 	int i = 0;
 	while(line[i]!='\0') {
+		if(line[i]=='\n') {
+			break;
+		}
 		if(line[i]==' ') {
 			n++;
 		}
 		i++;
 	}
-	int a = 0;
-	char* wordArr[n];	//get the words and store them in an array
-	for(i = 0; i < n; i++) {
-		int b = 0;
-		while(line[a]!=' ' || line[a]!='\0') {
-			*(wordArr + i)[b] = line[a];
-			a++;
-			b++;
-		}
-		a++;
-	}
 	//print out words in reverse order
+	int a = i - 1;
+	int c;
 	for(i = 0; i < n; i++) {
-		printf("%s ", *(wordArr + n - i));
+		int b = 0;						//reset b to 0. (b represents length of the word/substring to be printed next)
+		while(line[a]!=' ' && a>=0) {	//starting from the last character in the string go back until a space or string begining is found
+			b++;
+			a--;
+		}
+		for(c = 1; c <= b; c++) {		//print out word found by the previous while loop
+			if(line[a+c]!='?' && line[a+c]!='.' && line[a+c]!='!' && line[a+c]!=',')
+			printf("%c", line[a+c]);
+		}
+		a--;
+		printf(" ");
 	}
 	printf("\n");
 }
