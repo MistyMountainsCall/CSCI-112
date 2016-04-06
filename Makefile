@@ -15,8 +15,8 @@ bonus:
 
 
 p2:
-	c99 -Wall vanhouten_walker_bonus1.c -o program2 -lm
-	./program2
+	gcc -o program2 vanhouten_walker_program2.c
+	./program2 cat cat cat cat berry circus boss cherry
 	rm program2
 
 l6:
