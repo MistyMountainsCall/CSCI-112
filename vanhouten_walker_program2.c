@@ -40,7 +40,8 @@ void pluralize(char *word, char *store) {
 		i++;
 	}
 	/* Choose which way the word needs to be modified and perform it			*/
-	if(word[i-1]!='s' && word[i-1]!='y') {	/* all but y and s endings			*/
+	/* all but y and s endings													*/
+	if(word[i-1]!='s' && word[i-1]!='y' && (word[i-1]!='h' && (word[i-2]!='s' || word[i-2!='c'])) ) {
 		store[i] = 's';
 		store[i+1] = '\0';
 	} else if(word[i-1]=='y') {				/* y endings						*/

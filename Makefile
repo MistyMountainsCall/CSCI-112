@@ -4,9 +4,9 @@ all:
 	cat Makefile
 	
 
-update:
+upload:
 	git add .
-	git commit;git push
+	git commit -S;git push
 
 bonus:
 	gcc vanhouten_walker_bonus1.c -o bonus
@@ -16,7 +16,7 @@ bonus:
 
 p2:
 	gcc -o program2 vanhouten_walker_program2.c
-	./program2 cat cat cat cat berry circus boss cherry
+	./program2 cat cat cat cat berry circus boss cherry church brush
 	rm program2
 
 l6:
