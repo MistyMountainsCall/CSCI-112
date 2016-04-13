@@ -1,0 +1,299 @@
+#!/bin/bash
+# Marissa Joehler
+# CSCI 112 - shell script to grade lab7
+# 4/7/2016
+
+# Specific values for this lab:
+assignment="lab7"
+CC=gcc
+CFLAGS="-Wall -std=c99"
+tests_dir="tests"
+comment_weight=6.0
+create_tests=0
+check_for_content=1
+
+usage()
+{
+    echo "Usage: `basename $0` <file to test> <scores.csv>"
+    exit 1; 
+}
+
+# Make sure we have the parameters:
+# $1 = The path to the file to test
+# $2 = The path to the scores.csv file to update.
+if [ $# -lt 2 ]; then
+    echo "ERROR: Not enough parameters"
+    usage
+fi
+
+inputfile=$1
+if [ \! -f "$inputfile" ]; then
+    echo "ERROR: Cannot find file: $inputfile"
+    exit 1
+fi
+scores_csv=$2
+if [ \! -f "$scores_csv" ]; then
+    echo "ERROR: Cannot find file: $scores_csv"
+    exit 1
+fi
+
+# This is the current directory
+cur_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" 
+tests_dir="${cur_dir}/${tests_dir}";
+
+
+#  last_name,first_name,compile_score,run_score,output_score,comment_score  >> "$scores_csv"
+
+# make sure it follows the naming convention - extract everything between the underscores, convert to array
+names=`echo $(basename "$inputfile") | sed 's/\(.*\)_\(.*\)_\(.*\)\.c/\1 \2 \3/'`
+names=($names)
+names_len=${#names[@]}
+lab_name=""
+student_name=""
+for ((i=0; i<${names_len}; i++ )); do
+    if [ $((i+1)) -eq $names_len ]; then
+        lab_name=${names[$i]}
+    else
+        student_name="$student_name ${names[$i]}"
+    fi
+done
+echo "Assignment: $lab_name"
+echo "Student:    $student_name"
+echo 
+
+if [ "$lab_name" != "$assignment" ]; then
+    echo "ERROR: Expected assignment name: $assignment"
+    echo "Please remember to name your file using this convention: last_first_labN.c"
+    echo "Skipping $inputfile ..."
+    echo ""
+    exit 1
+fi
+
+
+# get the output directory (this is where the scores.csv is stored). 
+out_dir="$( cd "$( dirname $scores_csv )" && pwd )/$( basename $inputfile | sed 's:\.c::')"
+mkdir -p "$out_dir"
+
+# print put the filename
+echo "[`basename $inputfile`]"
+
+# reset the scores
+compile_score=2
+run_score=0
+output_score=0
+comment_score=0
+prog="${assignment}_prog"
+
+
+# compile it
+${CC} ${CFLAGS} "$inputfile" -o "$prog" 2> "$assignment.err" > "$assignment.out"
+rv=$?
+
+# Check for compiler errors and warmings. 
+if [ $rv -ne 0 ]; then
+    echo "Detected compiler error" 
+    cat "$assignment.err" "$assignment.out" 
+    cat "$assignment.err" "$assignment.out" > "${out_dir}/${assignment}.compile" 
+    echo 
+    compile_score=0
+elif [ -s "$assignment.err" ]; then
+    echo "Detected compiler warning" 
+    cat "$assignment.err" "$assignment.out" > "${out_dir}/${assignment}.compile" 
+    echo 
+    compile_score=1
+else
+    echo "Compiled OK!"
+fi
+
+show_diff_instructions=0
+values_ok=0
+out_ok=0
+runs_ok=0
+total_runs=0
+# Run it though all of the tests in the test directory. 
+# the way these work is that each .txt file in the test directory is a set of sample input
+# We should just be able to pipe the file to the program 
+for testfile in "$tests_dir"/test*.txt
+do
+    ((total_runs++))
+    echo
+    testname="$( basename $testfile | sed 's:\.txt::')"
+    echo "[====================== test $total_runs: $testname  ======================]" 
+
+    cat $testfile > "${out_dir}/${testname}.in"
+
+    param=`cat $testfile | head -n1`
+    input=$(echo $testfile | sed -e 's:test\(.\)\.txt:input\1\.txt:')
+    # Run it
+    if [ -f "$input" ]; then
+        ./"$prog" $param < "$input"   > "$assignment.out" 2> "$assignment.err"
+        rv=$?
+    else
+        ./"$prog" $param  > "$assignment.out" 2> "$assignment.err"
+        rv=$?
+    fi
+
+    cat "$assignment.out" > "${out_dir}/${testname}.out"
+
+    if [ $rv -ne 0 ]; then
+        echo "Detected runtime error (check that you have 'return 0' at the end of your main function)" 
+        cat "$assignment.err" > "${out_dir}/${testname}.run"
+        echo 
+    elif [ -s "$assignment.err" ]; then
+        echo "Detected runtime warning" 
+        cat "$assignment.err" > "${out_dir}/${testname}.run"
+        echo 
+    else
+        echo "Execution OK!"
+        ((runs_ok++))
+    fi
+
+
+    result_file="`dirname $testfile`/results"
+    if [ \! -d "$result_file" ]; then
+        mkdir "$result_file"
+    fi
+    result_file="$result_file/`basename $testfile`"
+    if [ \! -f "$result_file" ]; then
+        echo "Result file does not exist:"
+        echo "  $result_file"
+
+        if [ $create_tests -ne 1 ]; then
+            exit 1
+        else 
+            echo
+            cat "$assignment.out"
+            read -p "Create from these results? (y/n) " -n 1 -r
+            echo 
+            if [[ $REPLY =~ ^[Yy]$ ]]
+            then
+                cp "$assignment.out" "$result_file"
+            fi
+        fi
+    fi
+
+    # Make sure the output is what is expected
+    diff -ud "$result_file" "$assignment.out" > "$assignment.err" 2>/dev/null
+    rv=$?
+    if [ $rv -ne 0 -o -s "$assignment.err" ]; then
+        show_diff_instructions=1
+        # Print diff to ouput file
+        echo "Detected diff error"
+        cat "$assignment.err" > "${out_dir}/${testname}.diff"
+
+        # Check for GREP tests
+        grep_test=`echo $(basename "$testfile") | sed 's/\.txt/\.grep/'`
+        grep_lines=0
+        grep_ok=0
+        if [ -f "$tests_dir/$grep_test" ]; then
+            echo "Formatting is off, checking for correct values..."
+            while IFS='' read -r line || [[ -n "$line" ]]; do
+                multi_line=$(echo $line | grep "\n" | wc -l)
+                #echo "line = $line"
+                #echo "multi = $multi_line"
+                if [ $multi_line -gt 0 ]; then
+                    #cat "$assignment.out" | pcregrep -M "${line}"
+                    grep_rv=$(cat "$assignment.out" | pcregrep -M "${line}" | wc -l)
+                else
+                    grep_rv=$(cat "$assignment.out" | grep "${line}" | wc -l)
+                fi
+                #echo "grep_rv = $grep_rv"
+                ((grep_lines++))
+                if [ $grep_rv -gt 0 ]; then
+                    # For lab 0 and 1, its ok if the values are there
+                    ((grep_ok++))
+                fi
+            done < "$tests_dir/$grep_test"
+
+            if [ $grep_lines -eq $grep_ok -a $grep_lines -gt 0 ]; then
+                ((values_ok++))
+                echo "Values OK!"
+            else
+                echo "ERROR: Not all of the expected results were found."
+                echo "Double-check your formulas and data types. "
+            fi
+        fi
+    else
+        echo "Format and values OK!"
+        ((out_ok++))
+        ((values_ok++))
+    fi
+
+
+    # Clean up files as necessary. 
+    if [ ! -f "${out_dir}/${testname}.diff" ]; then
+        rm "${out_dir}/${testname}.in"
+        rm "${out_dir}/${testname}.out"
+    fi
+done
+
+
+
+if [ $check_for_content -ne 0 ]; then
+    echo
+    echo "====================================="
+    echo "Checking file content..."
+    # Check for contents in file:
+    file_content=2
+    total_content=2
+
+    # Check for required constant
+    grep_rv=$(cat "$inputfile" | grep "#define MAX_ELEMENTS" | wc -l)
+    if [ $grep_rv -eq 0 ]; then
+        echo "WARNING: No #define MAX_ELEMENTS found in source file!"
+        echo "You must define a constant for MAX_ELEMENTS for full credit"
+        echo "Be sure to use capital letters for your define"
+        ((file_content--))
+        # make sure it is actually used
+        grep_rv=$(cat "$inputfile" | grep "MAX_ELEMENTS" | wc -l)
+        if [ $grep_rv -lt 2 ]; then
+            echo "WARNING: You must use the constant MAX_ELEMENTS in your program, to receive full credit"
+            ((file_content--))
+        fi
+    else 
+        echo "Found #define MAX_ELEMENTS!"
+    fi
+
+    content_score=$( awk "BEGIN {printf \"%.2f\", ${file_content}/${total_content} * 2; exit(0)}")
+fi
+
+echo
+run_score=$( awk "BEGIN {printf \"%.2f\", ${runs_ok}/${total_runs} * 2; exit(0)}")
+output_score=$( awk "BEGIN {printf \"%.2f\", (${out_ok}+${values_ok})/${total_runs}; exit(0)}")
+compile_score=$( awk "BEGIN {printf \"%.2f\", ${compile_score}; exit(0)}")
+
+# Check for comments. 
+comment_count=`( grep "/\*" $inputfile; grep "//" $inputfile; grep "^ \*" $inputfile; ) | cat | wc -l`
+line_count=`cat $inputfile | wc -l`
+comment_score=$( awk "BEGIN {printf \"%.2f\", (${comment_weight} * ${comment_count})/${line_count} * 2; exit(0)}")
+
+
+echo "---------------------------------------------------------"
+echo "         TEST RESULTS FOR ASSIGNMENT: $assignment"
+echo
+echo " Student:     $student_name"
+echo " Compiling:   $compile_score"
+echo " Execution:   $run_score ($runs_ok/$total_runs)"
+echo " Output:      $output_score "
+echo "    Format:   ($out_ok/$total_runs)"
+echo "    Values:   ($values_ok/$total_runs)"
+if [ $check_for_content -ne 0 ]; then
+echo " Content:     $content_score ($file_content/$total_content)"
+fi
+echo " Comments:    $comment_score "
+if [ $show_diff_instructions -eq 1 ]; then
+    echo
+    echo " View detailed results, including diffs of formatting errors, here: "
+    echo "    $out_dir"
+    echo
+    echo " For example, run this command to view all formatting differences:"
+    echo "    vi $out_dir/*.diff "
+fi
+
+# Write it out to a csv file
+echo "$student_name,$compile_score,$run_score,$output_score,$content_score,$comment_score" >> "$scores_csv"
+
+# clean up
+rm "$prog" "$assignment.err" "$assignment.out"
+
+exit 0;

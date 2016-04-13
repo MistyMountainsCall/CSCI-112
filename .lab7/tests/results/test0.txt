@@ -1,0 +1,8 @@
+1 total elements.
+Sodium had the smallest atomic number.
+Sodium had the largest atomic number.
+---------------
+| 11	22.9898
+| Na	Sodium
+| 2 8 1
+---------------

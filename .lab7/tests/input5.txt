@@ -1,0 +1,10 @@
+6 Carbon C other_nonmetals 12.011 2 4 0 0 0 0 0
+13 Aluminum Al post_transition_metals 26.9815 2 8 3 0 0 0 0 
+26 Iron Fe transition_metals 55.845 2 8 14 2 0 0 0 
+20 Calcium Ca alkaline_earth_metals 40.078 2 8 8 2 0 0 0  
+92 Uranium U actinoids 238.028 2 8 18 32 21 9 2  
+80 Mercury Hg transition_metals 200.59 2 8 18 32 18 2 0 
+10 Neon Ne noble_gas 20.1797 2 8 0 0 0 0 0 
+47 Silver Ag transition_metals 107.8682 2 8 18 18 1 0 0 
+14 Silicon Si metalloid 28.085 2 8 4 0 0 0 0 
+8 Oxygen O other_nonmetals 15.999 2 6 0 0 0 0 0 

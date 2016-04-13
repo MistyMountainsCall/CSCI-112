@@ -23,7 +23,11 @@ l6:
 	c99 -Wall vanhouten_walker_lab6.c -o lab6
 	./lab6 2
 	rm lab6
-	
+
+l7:
+	c99 -Wall vanhouten_walker_lab7.c -o lab7
+#	./lab7 4
+#	rm lab7
 
 testing:
 	gcc test.c -o test
