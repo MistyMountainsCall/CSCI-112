@@ -19,6 +19,9 @@ p2:
 	./program2 cat cat cat cat berry circus boss cherry church brush
 	rm program2
 
+p3:
+	c99 -Wall -o program3 vanhouten_walker_program3.c -lm
+
 l6:
 	c99 -Wall vanhouten_walker_lab6.c -o lab6
 	./lab6 2
@@ -26,12 +29,8 @@ l6:
 
 l7:
 	c99 -Wall vanhouten_walker_lab7.c -o lab7
-#	./lab7 4
-#	rm lab7
 
 testing:
 	gcc test.c -o test
 	./test
 
-clean:
-	rm test
